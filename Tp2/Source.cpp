@@ -23,159 +23,239 @@ void afficherSouris(int sourisX[], int sourisY[], int nbSouris);
 void deplacerSerpentII(int direction, int serpentX[], int serpentY[],
 	int &tailleSerpent,
 	int sourisX[], int sourisY[], int &nbSouris);
-/*	ou	*/
-//void deplacerSerpentII(int direction, int serpentX[], int serpentY[],
-//	int &indiceTete, int &indiceQueue,
-//	int sourisX[], int sourisY[], int &nbSouris);
 bool testerCollision(int x, int y, int sourisX[], int sourisY[], int &nbSouris);
 
 
 // Partie III (BONUS)
 // ------------------
 void deplacerSouris(int sourisX[], int sourisY[], int nbSouris);
-void placerMurs(int nbLignes, int nbColonnes, int nbMurs);
 
 
-// Déclaration des constantes
+// AJOUT DE FONCTIONS SUPPLÉMENTAIRES
+
+int validerNumerique();
+int validerPlage(int borneMin, int borneMax);
+char oui_non(); // Va servir à saisir les réponses oui/non et uniformise celles-ci en majuscule
+
+
+// Déclaration des constantes (caractères ASCII utilisé pour dessiner le serpent et les souris
 const  char dessinSouris = 15;
-const  char dessinSerpent = 254;
-const  char dessinMur = 221;
+const  char dessinTeteSerpent = 2;
+const  char dessinCorpsSerpent = 254;
 
 //  fonction principale
 //  -------------------
 int main()
 {
-	// Affichage des variables
-	bool partieTerminee = false; // Variable pour déterminer la fin de la partie (la boucle while dans le code)
-	int touche, direction;
-	int indiceTete = 0, indiceQueue = 0;
-	int tailleSerpent = 1;
+	bool gain; // boolean afin de retenir si le joeur a gagne (donc peut passer au prochain niveau) ou perdu (doit reprendre le niveau)
+	bool quitter = false; // Pour arrêter la boucle si le joueur veut quitter la partie
+	char reponse; // Pour conserver les réponse en oui/non
 
-	// Déterminer le srand() pour les valeurs aléatoires
-	srand((unsigned int)time(NULL));
-
-	// Déclaration des tableaux
-	int sourisX[20], sourisY[20];
-
-
-	//----------------------------------------AFFICHAGE DU JEU -----------------------------------------------
-
-	//Déterminer la largeur de la fenetre à apparaître  -- utilise la fonction setDimensionFenetre de RockUtiles
-	setDimensionFenetre(0, 0, 71, 35);
-
-	// Affichage du terrain -- Utilise la fonction afficher terrain de la partie 1
-	int nbLignes = 30, nbColonnes = 70;
-	afficherTerrain(nbLignes, nbColonnes);
-
+	// Affichage du début du jeu
+	gotoXY(10, 10);
+	cout << "              LE JEU DU SERPENT";
+	
 	// ---- Déterminer le niveau de la partie 
-
+	gotoXY(10, 15);
+	cout << "A quel niveau desirez-vous commencer?: ";
 	int niveau = saisirNiveau();
-	int nbSouris = niveau;
-
-	// ---- Créer et afficher les souris selon le niveau sélectionné
-	creerSouris(nbLignes, nbColonnes, sourisX, sourisY, nbSouris);
-	afficherSouris(sourisX, sourisY, nbSouris);
-
-	// Faire apparaître le serpent
-	// Déterminier la position
-	int posX = 0, posY = 0;
-	positionAleatoire(nbLignes, nbColonnes, posX, posY);
-	gotoXY(posX, posY);
-	int serpentX[100] = { posX };
-	int serpentY[100] = { posY };
-
-	//Afficher le serpent (un bloc dans le terrain que l'on colore d'une autre couleur dans le jeu)
-	color(FOREGROUND_RED + BACKGROUND_GREEN);
-	cout << dessinSerpent;
 
 
-	// -------------------------------------------Boucle de la partie--------------------------------
 
-	int tour = 0;
-	int ancienneTouche = 0;
-	while (!partieTerminee) {
+	// -------------------------------------- Boucle pour l'option de rejouer -------------------------------
+	do
+	{
+		// Affichage des variables
+		bool partieTerminee = false; // Variable pour déterminer la fin de la partie (la boucle while dans le code)
+		int touche, direction; // Variables pour conserver la touche et la direction du serpent
+		int tailleSerpent = 1;
 
-		Sleep(100);
+		// Déterminer le srand() pour les valeurs aléatoires
+		srand((unsigned int)time(NULL));
 
-		// Récupérer la touche		
+		// Déclaration des tableaux pour les souris
+		int sourisX[20], sourisY[20];
 
-		if (tour == 0) {
-			do {
-				touche = recupererTouche();
-			} while (touche == -1);
-		}
-		else {
-			if (touche != -1) {
-				ancienneTouche = touche;
+
+		//----------------------------------------AFFICHAGE DU JEU -----------------------------------------------
+
+		//Déterminer la largeur de la fenetre à apparaître  -- utilise la fonction setDimensionFenetre de RockUtiles
+		setDimensionFenetre(0, 0, 75, 40);
+
+		// Affichage du terrain -- Utilise la fonction afficher terrain de la partie 1
+		int nbLignes = 30, nbColonnes = 70;
+		afficherTerrain(nbLignes, nbColonnes);
+
+		// Déterminer le nombre de souris
+		int nbSouris = niveau; // Le niveau correspond au nombre de souris à afficher
+		//int nbMurs = niveau * 2; 
+
+		// ---- Créer et afficher les souris selon le niveau sélectionné
+		creerSouris(nbLignes, nbColonnes, sourisX, sourisY, nbSouris);
+		afficherSouris(sourisX, sourisY, nbSouris);
+
+		// Faire apparaître le serpent
+		// Déterminier la position
+		int posX = 0, posY = 0;
+		positionAleatoire(nbLignes, nbColonnes, posX, posY);
+		gotoXY(posX, posY);
+
+		// Déclaration et initialisation des tableaux pour les coordonnées du serpent
+		int serpentX[100] = { posX };
+		int serpentY[100] = { posY };
+
+		//Afficher le serpent 
+		color(FOREGROUND_RED + BACKGROUND_GREEN);
+		cout << dessinTeteSerpent;
+
+		// Vitesse selon le niveau
+		int delaiSepent = 460 - 20 * (niveau - 1);
+
+		// Déclaration et initialisation du nombre de tours (pour distinguer le premier tour des subséquents)
+		int tour = 0;
+
+		// Déclaration et initialisation d'une variable pour conserver en mémoire la dernière touche appuyée valide. 
+		int ancienneTouche = 0;
+
+
+
+		// -------------------------------------------Boucle de la partie--------------------------------
+
+		while (!partieTerminee) {
+
+			Sleep(delaiSepent); // Afin de ralentir le jeu - Va varier selon le niveau
+
+			// Récupérer la touche		
+
+			if (tour == 0) { // Pour attendre que le joeur ait appuyer sur sa première touche
+				do {
+					touche = recupererTouche();
+				} while (touche == -1);
 			}
-			touche = recupererTouche();
-		}
+			else {
+				if (touche != -1) {
+					ancienneTouche = touche; // Conserver en mémoire la derniere touche valide
+				}
+				touche = recupererTouche();
+			}
 
-		// Déterminer la direction
+			// Déterminer la direction
 
-		if (touche == -1) {
-			direction = calculerDirectionTouche(ancienneTouche);
-		}
-		else {
-			direction = calculerDirectionTouche(touche);
-		}
+			if (touche == -1) {
+				direction = calculerDirectionTouche(ancienneTouche); // s'il n'y a pas de touche appuyé, va utiliser la dernière touche en mémoire pour calculer la direction
+			}
+			else {
+				direction = calculerDirectionTouche(touche); // S'il y a une nouvelle touche, on va calculer la destination avec celle-ci
+			}
 
-		// Déplacement du serpent
+			// Déplacement des souris
 
-		if (direction == -1) {
-			color(FOREGROUND_BLUE + FOREGROUND_GREEN + FOREGROUND_RED + FOREGROUND_INTENSITY);
-			gotoXY(0, 32);
-			cout << "Touche invalide -- Veuillez utiliser les touches w a s d";
-			partieTerminee = true;
-		}
-		else {
-			//deplacerSerpentI(direction, posX, posY);
-			deplacerSerpentII(direction, serpentX, serpentY, tailleSerpent, sourisX, sourisY, nbSouris);
-		}
+			if (tour % 5 == 0) { // Ralentissement pour que les souris bougent moins vite que le serpent
+				deplacerSouris(sourisX, sourisY, nbSouris);
+			}
 
-		// FIN DE LA PARTIE
+			// Déplacement du serpent
 
-		// Afin de pouvoir utiliser les lignes de fin de partie avec les deux  fonctions de déplacements
-		posY = serpentY[0];
-		posX = serpentX[0];
+			if (direction == -1) { // Traitement des cas des touches invalides
+				color(FOREGROUND_BLUE + FOREGROUND_GREEN + FOREGROUND_RED + FOREGROUND_INTENSITY);
+				gotoXY(0, 32);
+				cout << "Touche invalide -- Veuillez utiliser les touches w a s d";
+				partieTerminee = true;
+			}
 
-		// Fin de partie en cas de collision avec le mur
+			else {
+				//deplacerSerpentI(direction, posX, posY);
+				deplacerSerpentII(direction, serpentX, serpentY, tailleSerpent, sourisX, sourisY, nbSouris);
+			}
 
-		if (posY == 0 || posY == nbLignes || posX == 0 || posX == nbColonnes) {
-			color(FOREGROUND_BLUE + FOREGROUND_GREEN + FOREGROUND_RED + FOREGROUND_INTENSITY);
-			gotoXY(0, 33);
-			cout << "Vous avez perdu - Fin de la partie";
-			partieTerminee = true;
-		}
 
-		// Fin de la partie en cas de collision avec le serpent
+			// FIN DE LA PARTIE
 
-		for (int i = 1; i < tailleSerpent; i++) { // On commence à 1 pour ne pas comparer avec la tête
-			if (posY == serpentY[i] && posX == serpentX[i]) {
+			// Afin de pouvoir utiliser les lignes de fin de partie avec les deux  fonctions de déplacements
+			posY = serpentY[0];
+			posX = serpentX[0];
+
+			// Fin de partie en cas de collision avec les limites du terrain
+
+			if (posY == 0 || posY == nbLignes || posX == 0 || posX == nbColonnes) {
 				color(FOREGROUND_BLUE + FOREGROUND_GREEN + FOREGROUND_RED + FOREGROUND_INTENSITY);
 				gotoXY(0, 33);
 				cout << "Vous avez perdu - Fin de la partie";
 				partieTerminee = true;
+				gain = false;
+			}
+
+			// Fin de la partie en cas de collision avec le serpent
+
+			for (int i = 1; i < tailleSerpent; i++) { // On commence à 1 pour ne pas comparer avec la tête
+				if (posY == serpentY[i] && posX == serpentX[i]) {
+					color(FOREGROUND_BLUE + FOREGROUND_GREEN + FOREGROUND_RED + FOREGROUND_INTENSITY);
+					gotoXY(0, 33);
+					cout << "Vous avez perdu - Fin de la partie";
+					partieTerminee = true;
+					gain = false;
+				}
+			}
+
+
+			// Fin de la partie si toute les souris ont été mangées
+
+			if (nbSouris == 0) {
+				gotoXY(0, 33);
+				cout << "Vous avez gagne !!! Bravo ";
+				partieTerminee = true;
+				gain = true;
+			}
+
+			// incrément du nombre de tour
+			tour++;
+
+		}  // ------------------------Fin de la boucle de la partie --------------------
+
+		// Traitement afin de reprendre un niveau si le joueur a perdu
+
+		if (gain == false) {
+			cout << endl << "Voulez- vous reprendre le niveau (O/N)?";
+			reponse = oui_non();
+			if (reponse == 'N') {
+				quitter = true;
+			}
+		}
+		else { // Traitement lorsque le joueur a gagne le niveau
+			if (niveau == 20) { // S'il est au dernier niveau, on lui demande a quel niveau il veut reprendre
+				cout << endl << "Dernier niveau termine - Fin de la partie" << endl;
+				cout << "Voulez- vous continuer a jouer?:";
+				reponse = oui_non();
+				if (reponse == 'N') {
+					quitter = true;
+				}
+				else {
+					cout << endl << " A quel niveau desirez-vous recommencer ? : ";
+					niveau = saisirNiveau();
+				}
+			}
+			else { // Pour les niveaux de 1 à 19, on suggère de continuer au prochain niveau
+				cout << endl << "Voulez-vous jouer au prochain niveau (O/N)?";
+				reponse = oui_non();
+				if (reponse == 'N') {
+					quitter = true;
+				}
+				else {
+					niveau++;
+				}
 			}
 		}
 
-		// Fin de la partie si toute les souris ont été mangées
+		system("cls"); // Nettoie l'écran avant de reprendre la boucle d'Affichage et de partie. 
 
-		if (nbSouris == 0) {
-			gotoXY(0, 33);
-			cout << "Vous avez gagne !!! Bravo ";
-			partieTerminee = true;
-		}
+	} while (!quitter); //---------------------------- FIN DE LA BOUCLE avec l'option rejouer---------------------------------
 
-		// incrément du nombre de tour
-		tour++;
 
-	}  // ------------------------Fin de la boucle de la partie --------------------
 
-	Sleep(1000);
 	// Pour envoyer le "appuyer... à une autre ligne
 	color(FOREGROUND_BLUE + FOREGROUND_GREEN + FOREGROUND_RED + FOREGROUND_INTENSITY);
-	gotoXY(0, 34);
+	gotoXY(20, 15);
+	cout << "Merci d'avoir joue !! - A la prochaine" << endl;
 	return 0;
 }
 
@@ -277,7 +357,8 @@ entrée / sortie
 
 	gotoXY(posX, posY);
 	color(FOREGROUND_RED + BACKGROUND_GREEN);
-	cout << dessinSerpent;
+	cout << dessinTeteSerpent;
+
 }
 
 
@@ -299,7 +380,7 @@ int saisirNiveau()
 	color(FOREGROUND_BLUE + FOREGROUND_GREEN + FOREGROUND_RED + FOREGROUND_INTENSITY);
 	gotoXY(0, 32);
 	cout << "Niveau de 1 a 20: ";
-	cin >> niveau;
+	niveau = validerPlage(1, 20);
 	return niveau;
 }
 
@@ -350,18 +431,19 @@ void deplacerSerpentII(int direction, int serpentX[], int serpentY[],
 {
 	// Effacer le serpent
 
-	int indice = 0;
-	while (indice < tailleSerpent) {
-		gotoXY(serpentX[indice], serpentY[indice]);
-		color(BACKGROUND_GREEN);
-		cout << " ";
-		indice++;
-	}
+	gotoXY(serpentX[0], serpentY[0]);
+	color(FOREGROUND_RED + BACKGROUND_GREEN);
+	cout << dessinCorpsSerpent;
+
+	gotoXY(serpentX[tailleSerpent - 1], serpentY[tailleSerpent - 1]);
+	color(BACKGROUND_GREEN);
+	cout << " ";
+
 
 	// Déplacer les coordonnées
-
+	int indice = 0;
 	indice = tailleSerpent;
-	while (indice >= 1 ) {
+	while (indice >= 1) {
 		serpentX[indice] = serpentX[indice - 1];
 		serpentY[indice] = serpentY[indice - 1];
 		indice--;
@@ -385,21 +467,21 @@ void deplacerSerpentII(int direction, int serpentX[], int serpentY[],
 	bool collision = testerCollision(posX, posY, sourisX, sourisY, nbSouris);
 	if (collision == true) {
 		tailleSerpent++;
-	}
-
-	color(FOREGROUND_BLUE + FOREGROUND_GREEN + FOREGROUND_RED + FOREGROUND_INTENSITY);
-	gotoXY(55, 33);
-	cout << "Nb souris: " << nbSouris  << endl;
-
-	// Afficher de nouveau le serpent
-
-	indice = 0;
-	while (indice < tailleSerpent) {
-		gotoXY(serpentX[indice], serpentY[indice]);
+		gotoXY(serpentX[tailleSerpent - 1], serpentY[tailleSerpent - 1]);
 		color(FOREGROUND_RED + BACKGROUND_GREEN);
-		cout << dessinSerpent;
-		indice++;
+		cout << dessinCorpsSerpent;
 	}
+
+	// Afficher la  nouvelle tête du serpent
+
+	gotoXY(serpentX[0], serpentY[0]);
+	color(FOREGROUND_RED + BACKGROUND_GREEN);
+	cout << dessinTeteSerpent;
+
+	// Afficher le nombre de souris restantes
+	color(FOREGROUND_BLUE + FOREGROUND_GREEN + FOREGROUND_RED + FOREGROUND_INTENSITY);
+	gotoXY(40, 32);
+	cout << "Nombre de souris restantes: " << nbSouris << "      " << endl;
 }
 
 bool testerCollision(int posX, int posY, int sourisX[], int sourisY[], int &nbSouris)
@@ -443,14 +525,98 @@ Tâche: déplacer les souris (aléatoirement ou intelligemment)
 Paramètres: les tableaux de coordonnées et le nombre de souris
 */
 {
-	// à compléter
+
+	bool bonneDestination = false;
+
+	for (int i = 0; i < nbSouris; i++) {
+
+		gotoXY(sourisX[i], sourisY[i]);
+		color(BACKGROUND_GREEN);
+		cout << " ";
+
+		bonneDestination = false;
+
+		while (!bonneDestination) {
+			int directionAleatoire = rand() % 4;
+			switch (directionAleatoire) {
+			case 0: if (sourisX[i] < 68) sourisX[i]++;
+				break;
+			case 1:if (sourisX[i] > 2) sourisX[i]--;
+				break;
+			case 2: if (sourisY[i] > 2) sourisY[i]--;
+				break;
+			default:if (sourisY[i] < 28)sourisY[i]++;
+			}
+
+			if (getCharXY(sourisX[i], sourisY[i]) == ' ')
+				bonneDestination = true;
+		}
+		gotoXY(sourisX[i], sourisY[i]);
+		color(FOREGROUND_BLUE + BACKGROUND_GREEN);
+		cout << dessinSouris;
+	}
 }
 
-void placerMurs(int nbLignes, int nbColonnes, int nbMurs)
-/*
-Tâche: placer des murs aléatoirement sur le terrain de jeu
-Paramètres: les dimensions du terrain et le nombre de murs à placer
-*/
-{
-	// à compléter
+
+
+
+
+//*********************************
+//    FONCTION SUPPLÉMENTAIRES
+//*********************************
+
+// Fonction pour la validation numérique des saisies
+int validerNumerique() {
+	int n;
+	bool estValide = false;
+
+	do
+	{
+		cin >> n;
+
+		if (cin.fail() || cin.peek() != '\n') {
+			cin.clear();
+			cin.ignore(512, '\n');
+			cout << "Ceci n'est pas un nombre valide" << endl;
+		}
+		else {
+			estValide = true;
+		}
+	} while (estValide == false);
+
+	return n;
+}
+
+// Fonction pour la validation des plages de la saisie
+int validerPlage(int borneMin, int borneMax) {
+	int nombreSaisi;
+	bool estValide;
+
+	do
+	{
+		nombreSaisi = validerNumerique();
+		if (nombreSaisi<borneMin || nombreSaisi>borneMax) {
+			cout << "Ce nombre n'est pas entre " << borneMin << " et " << borneMax << "." << endl;
+			estValide = false;
+		}
+		else {
+			estValide = true;
+		}
+	} while (estValide == false);
+
+	return nombreSaisi;
+}
+
+// Fonction pour valider et uniformiser les réponses en oui/non
+
+char oui_non() {
+	char caractere;
+	do
+	{
+		caractere = toupper(_getche());
+		if ((caractere != 'O') && (caractere != 'N')) { //Faire afficher un message d'erreur 
+			cout << endl << "Valeur invalide! - Veuillez entrer 'o' ou 'n': ";
+		}
+	} while ((caractere != 'O') && (caractere != 'N'));
+	return caractere;
 }
