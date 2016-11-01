@@ -161,6 +161,7 @@ int main()
 				gotoXY(0, 32);
 				cout << "Touche invalide -- Veuillez utiliser les touches w a s d";
 				partieTerminee = true;
+				gain = false;
 			}
 
 			else {
@@ -293,7 +294,7 @@ int recupererTouche()
 
 	int touche;
 	if (_kbhit() != 0)
-		touche = _getch();
+		touche = _getch(); // Pour aller chercher la touche sur laquelle le joeur a appuyé
 	else {
 		touche = -1;
 	}
@@ -318,7 +319,7 @@ Retour: la direction qui correspond à la touche
 		break;
 	case 119:direction = 2;
 		break;
-	default: direction = -1;
+	default: direction = -1; // Touche invalide
 	}
 	return direction;
 }
@@ -342,10 +343,13 @@ Paramètres: la direction du serpent en entrée, et la position du serpent en
 entrée / sortie
 */
 {
+
+	// Effacer le seprpent
 	gotoXY(posX, posY);
 	color(BACKGROUND_GREEN);
 	cout << " ";
 
+	// Déterminer sa nouvelle position
 	if (direction == 0)
 		posX++;
 	else if (direction == 1)
@@ -355,6 +359,7 @@ entrée / sortie
 	else
 		posY++;
 
+	// Réafficher le serpent à sa nouvelle position
 	gotoXY(posX, posY);
 	color(FOREGROUND_RED + BACKGROUND_GREEN);
 	cout << dessinTeteSerpent;
@@ -380,7 +385,7 @@ int saisirNiveau()
 	color(FOREGROUND_BLUE + FOREGROUND_GREEN + FOREGROUND_RED + FOREGROUND_INTENSITY);
 	gotoXY(0, 32);
 	cout << "Niveau de 1 a 20: ";
-	niveau = validerPlage(1, 20);
+	niveau = validerPlage(1, 20); // Fait appel à une fonction qui va valider si l'entré est numérique et si elle est entre 1 et 20
 	return niveau;
 }
 
@@ -392,11 +397,11 @@ void creerSouris(int nbLignes, int nbColonnes,
 	nombre de souris
 	*/
 {
-	for (int i = 0; i < nbSouris; i++) {
+	for (int i = 0; i < nbSouris; i++) { // Coordonnées Y
 		sourisY[i] = rand() % (nbLignes - 2) + 1;
 	}
 
-	for (int i = 0; i < nbSouris; i++) {
+	for (int i = 0; i < nbSouris; i++) { // Coordonnées X
 		sourisX[i] = rand() % (nbColonnes - 2) + 1;
 	}
 }
@@ -431,10 +436,12 @@ void deplacerSerpentII(int direction, int serpentX[], int serpentY[],
 {
 	// Effacer le serpent
 
+	// Remplacer la tête par un morceau de corps
 	gotoXY(serpentX[0], serpentY[0]);
 	color(FOREGROUND_RED + BACKGROUND_GREEN);
 	cout << dessinCorpsSerpent;
 
+	// Effacer le bout de la queue
 	gotoXY(serpentX[tailleSerpent - 1], serpentY[tailleSerpent - 1]);
 	color(BACKGROUND_GREEN);
 	cout << " ";
@@ -465,7 +472,7 @@ void deplacerSerpentII(int direction, int serpentX[], int serpentY[],
 	int posX = serpentX[0];
 	int posY = serpentY[0];
 	bool collision = testerCollision(posX, posY, sourisX, sourisY, nbSouris);
-	if (collision == true) {
+	if (collision == true) { // S'il y a eu collision, on allonge le serpent et ajoute un carré à la fin du serpent
 		tailleSerpent++;
 		gotoXY(serpentX[tailleSerpent - 1], serpentY[tailleSerpent - 1]);
 		color(FOREGROUND_RED + BACKGROUND_GREEN);
@@ -497,10 +504,10 @@ Retour: true si collision, false sinon
 	bool collision = false;
 
 	for (int i = 0; i < nbSouris; i++) {
-		if (posX == sourisX[i] && posY == sourisY[i]) {
+		if (posX == sourisX[i] && posY == sourisY[i]) { // Détermine s'il y a eu collision
 			collision = true;
 
-			for (int j = i; j < nbSouris; j++) {
+			for (int j = i; j < nbSouris; j++) { // Si oui, on l'enlève de la population en décallant les souris
 				sourisX[j] = sourisX[j + 1];
 				sourisY[j] = sourisY[j + 1];
 			}
@@ -530,13 +537,13 @@ Paramètres: les tableaux de coordonnées et le nombre de souris
 
 	for (int i = 0; i < nbSouris; i++) {
 
-		gotoXY(sourisX[i], sourisY[i]);
+		gotoXY(sourisX[i], sourisY[i]); // Efface les souris de leur position
 		color(BACKGROUND_GREEN);
 		cout << " ";
 
 		bonneDestination = false;
 
-		while (!bonneDestination) {
+		while (!bonneDestination) { // On calcul la nouvelle position en s'assurant que la destination est libre
 			int directionAleatoire = rand() % 4;
 			switch (directionAleatoire) {
 			case 0: if (sourisX[i] < 68) sourisX[i]++;
@@ -551,7 +558,7 @@ Paramètres: les tableaux de coordonnées et le nombre de souris
 			if (getCharXY(sourisX[i], sourisY[i]) == ' ')
 				bonneDestination = true;
 		}
-		gotoXY(sourisX[i], sourisY[i]);
+		gotoXY(sourisX[i], sourisY[i]); // Réaffiche les souris
 		color(FOREGROUND_BLUE + BACKGROUND_GREEN);
 		cout << dessinSouris;
 	}
